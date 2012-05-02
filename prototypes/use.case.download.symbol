@@ -1,0 +1,614 @@
+#!/bin/bash 
+
+#-------------------------------------------------------------------------------
+# Use Case Title:Prototyp tool to download various financial data for an input
+#  symbol and store in basic "flat file" .psv data files
+#-------------------------------------------------------------------------------
+# 
+# Precondition
+#----------------------
+#	A. inputs: a symbol to download data for that exists on Yahoo Finance
+#		example "AAPL" 
+# 
+# Post condition
+#----------------------
+# 	A. exit code 0 should indicate successful data collection and formatting
+#	B. exit code non-zero should indicate some error occrured. State of 
+#	   output files :  yahoo.data.<symbol>.* is undefined upon error, 
+#	   but generally they are removed on error., or moved to .err versions
+#	C. outputs: yahoo.data.<symbol>.*.psv files with downloaded data in 
+#	   a consistent format. 
+#	D. outputs: yahoo.spec.*.psv files with specification for yahoo.data.*psv
+# 	E. existing yahoo.data.<symbol>.* files output dir are overwritten
+#	F. yahoo.data.<symbol>.* format:
+#		1. lines starting with # are comments
+#		2. Empty lines should be ignored
+#		3. All other lines are data lines that should match the 
+#		column specification in order.
+#	G. yahoo.spec.data.* format:
+#		1. COLUMN_SPEC| line contains the specification for 
+#		yahoo.data.<symbol>.* files  in column 2 ... N		
+#		2. There is only one spec.data.* file for each type of data file
+#		but many symbol files
+#		3. COLUMN_NUM| contains the number of columns in
+#		yahoo.data.<symbol>.* files  in column 2
+#	H. <TODO> maybe: an output directory / index file will be created which ..
+#	I. Data validation: All data in yahoo.data.<symbol>.* are verifed to match 
+#		specification in the following ways:
+#		(I.a) validate that data matches the number of expected COLUMN_NUM cols
+#		(b)
+# 
+# Minimal Guarantee
+#----------------------
+# 
+# Primary Actor
+#----------------------
+# A computer program or human that is downloading data for each symbol,
+# into the output directory CONFIG_OUTPUT_DIR for some the purpose of some 
+# later processing, storing into a database, or verification
+#
+# Main Success Scenario
+#----------------------
+# Invoke this command on a given symbol and it downloads "all" the financial 
+# that we deemed relevant in a format that can be verified as correct and used
+# for subsequent calculations.
+#
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Editor note: Set your tab spec to 4 for best 80 char wide viewing/editting.
+# example (vi) : set ts=4
+#-------------------------------------------------------------------------------
+
+#Output directory where output files will go.
+CONFIG_OUTPUT_DIR=/var/tmp/stocker/data # TODO: Discuss at SCRUM meeting, need 
+				#a directory structure. Is this a good place to put it?
+SEPARATED_FILE_TYPE="psv"; # pipe separated values file extension type
+SEPARATOR_CHAR="|";	# separator character for a psv file.
+CONFIG_URL_DOWNLOAD=1; #For development purposes, this can be set to anything
+			           #but 1 if you just want to reprocess previously 
+			           #downloaded data #without doing the download.
+
+
+script_cleanup() {
+	local symbol=$1;
+	if [ -n "$symbol" ] ; then
+		if [ "$CONFIG_URL_DOWNLOAD" == "1" ]; then # only done when downloading
+			echo "CLEANUP: ${FUNCNAME[0]}:LN:$LINENO: removing and creating " \
+				 "$CONFIG_OUTPUT_DIR/yahoo.data.$symbol.*.err " >> /dev/stderr
+			rm -rf $CONFIG_OUTPUT_DIR/yahoo.data.$symbol.*.err
+			find $CONFIG_OUTPUT_DIR/yahoo.data.$symbol.* | 
+				xargs -i echo "mv {} {}.err" | sh -x
+		fi
+	else
+		echo "ERROR:${FUNCNAME[0]}:LN:$LINENO:could not" \
+			  " cleanup because symbol is not specified" >> /dev/stderr
+	fi
+}
+
+halt_script() {
+	if ! [ -n "$1" ] ;then
+		echo "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:" \
+			 "internal error: $1" >> /dev/stderr
+		exit 1;
+	fi
+	echo -e "$1" >> /dev/stderr
+	echo "ERROR:${FUNCNAME[0]}:LN:$LINENO: exitting now!"
+	exit 1;
+}
+
+#-------------------------------------------------------------------------------
+# Check static config vars
+#-------------------------------------------------------------------------------
+if ! [ -n "$CONFIG_OUTPUT_DIR" ] ; then
+	halt_script "ERROR:CFG:${FUNCNAME[0]}:LN:$LINENO:CONFIG_OUTPUT_DIR not set."
+fi
+
+check_input_file(){
+	local input_file=$1
+	local input_location=${2-UNSPECIFIED}
+	if ! [ -n $input_file ] ; then
+		halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:" \
+			"no input/output file names : $input_loc"
+	fi
+	if ! [ -e $input_file ] ;then
+		halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:" \
+					"$input_file does not exist : $input_loc"
+    fi
+}
+
+print_progress_indicator () {
+	echo -n "$1" >> /dev/stderr
+}
+
+#-------------------------------------------------------------------------------
+# Check that the number of data columns in each row , 
+# matches the number of columns defined by the specification
+# and drop any rows which do not, and print an error.
+#-------------------------------------------------------------------------------
+post_process_validation() {
+	local symbol=$1
+	local input_file=$2
+	local mystring
+	local found_cols
+	local line
+	local lineno=0
+
+	check_input_file $input_file "${FUNCNAME[0]}:LN:$LINENO"
+
+	local specification_file=${input_file/yahoo.data.$symbol/yahoo.spec}
+
+	if ! [ -e $specification_file ] ; then 
+		halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:no $specification_file"
+	fi
+
+	local expected_cols=`cat $specification_file | 
+		grep "^COLUMN_NUM${SEPARATOR_CHAR}" | 
+		awk -F $SEPARATOR_CHAR '{printf("%s", $2);}'`
+
+	#--------------------------------------------------------------
+	# Data Validation point (I.a)
+	# Verify that the COLUNN_NUM number of cols exist in the data.
+	#--------------------------------------------------------------
+	cat $input_file | sed "s/|[[:space:]]*$//" | while read line ; do 	
+		#------------------------------
+		# count occurrences of SEPARATOR_CHAR '|' with BASH 
+		#------------------------------
+		local mystring="${line//[^$SEPARATOR_CHAR]/}"
+		let found_cols=${#mystring}+1
+		if [ "$found_cols" != "$expected_cols" ] ; then
+			script_cleanup $symbol
+			halt_script "ERROR:${FUNCNAME[0]}:LN:$LINENO:data format mismatch 
+				    detected on lineno: $lineno : mystring is $mystring 
+				    found_cols is $found_cols, expected_cols is $expected_cols
+				    data is \"$line\" " 
+				   
+		fi
+	done
+	
+	local rc=$?
+	if [ "$rc" != "0" ] ; then
+			halt_script "ERROR:${FUNCNAME[0]}:LN:$LINENO: bad rc $rc" 
+	fi
+}
+
+#-------------------------------------------------------------------------------
+# Check to make sure that one and only one
+# COLUMN_SPEC exists in the yahoo.data.<symbol>.* files
+# and that it is on the first line in the proper format
+#-------------------------------------------------------------------------------
+post_process_specification() {
+	local symbol=$1
+	local input_file=$2
+
+	check_input_file $input_file "${FUNCNAME[0]}:LN:$LINENO"
+
+	#----------------
+	# Check that only one specification was defined in the input_file	
+	#----------------
+	local spec_data=`grep "^#COLUMN_SPEC:" $input_file`
+	local num_specs=`echo "$spec_data" |wc -l`
+	if [ "$num_specs" != "1" ] ; then
+		halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:invalid \"$num_specs\""
+	fi	
+
+	local specification=`echo "$spec_data" | 
+		sed "s/^#COLUMN_SPEC:/COLUMN_SPEC${SEPARATOR_CHAR}/" | 
+		sed "s/$SEPARATOR_CHAR[[:space:]]*$//"  `
+
+	local specification_file=${input_file/yahoo.data.$symbol/yahoo.spec}
+
+	local data=`grep -v "^#COLUMN_SPEC:" $input_file `
+
+	if [ -e $specification_file ] ;then
+		local specification_data=`head -1 $specification_file`
+		if [ "$specification_data" != "$specification" ] ; then
+			script_cleanup $symbol
+			halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:\nspecification:" \
+				"$specification\" \ndoes not match: \nspeccification: " \
+			    "$specification_file: \"$specification_data\""
+		fi
+	else
+		echo "$specification" | 
+			sed "s/^#COLUMN_SPEC:/COLUMN_SPEC${SEPARATOR_CHAR}/" | 
+			sed "s/$SEPARATOR_CHAR[[:space:]]*$//" > $specification_file 
+
+		specification_data=`head -1 $specification_file`
+		local mystring="${specification_data//[^$SEPARATOR_CHAR]/}"
+		local mycount
+		let mycount=${#mystring}+1;
+		echo  "COLUMN_NUM${SEPARATOR_CHAR}${#mystring}" >> $specification_file
+	fi
+	echo -n "$data" > $input_file
+}
+
+#-------------------------------------------------------------------------------
+# Check that there are no extraneous ctrl-m's in the file
+#-------------------------------------------------------------------------------
+post_process_remove_ctrl_m() {
+	local input_file=$1
+	local tmp_file=$1.tmp
+	
+	check_input_file $input_file "${FUNCNAME[0]}:LN:$LINENO"
+	cat $input_file | sed "s///g" > $tmp_file
+	mv -f $tmp_file $input_file
+	return 0;
+}
+
+#-------------------------------------------------------------------------------
+# Take .csv output downloaded and change it into a .psv file
+#-------------------------------------------------------------------------------
+post_process_yahoo_historical_data() {
+	local symbol=$1
+	local input_file=$2
+	local output_file=$3
+	check_input_file $input_file "${FUNCNAME[0]}:LN:$LINENO"
+	if ! [ -n $output_file ] ;then
+		halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:no output file names "
+	fi
+	if ! head -2 $input_file | grep ^Date >/dev/null ; then
+		script_cleanup $symbol
+		halt_script "ERROR:${FUNCNAME[0]}:LN:$LINENO: " \
+			"historical data validation: no \"Date\" row in first 2 lines"
+	fi
+	cat $input_file | sed "s/^Date/#COLUMN_SPEC:Date/g" | 
+			sed "s/,/$SEPARATOR_CHAR/g"  > $output_file
+	return 0;
+}
+
+
+filter_expand_abbreviated_number_calculator( ){
+	echo "${1/,/} $2" | awk '{printf ("%.0f", $1*$2);}';
+}
+
+filter_expand_abbreviated_number () {
+	local number=$1
+	local abbreviation
+	local value
+	local myregex="^([[:space:]]*)([,.0-9]+)([KMBT])([[:space:]]*)$"
+	if [[ "$number" =~ $myregex ]] ; then
+		value=${BASH_REMATCH[2]}
+		abbreviation=${BASH_REMATCH[3]}
+		if [ "$abbreviation" == "K" ] ; then
+			filter_expand_abbreviated_number_calculator "$value" 1000
+		elif [ "$abbreviation" == "M" ] ; then
+			filter_expand_abbreviated_number_calculator "$value" 1000000
+		elif [ "$abbreviation" == "B" ] ; then
+			filter_expand_abbreviated_number_calculator "$value" 1000000000
+		elif [ "$abbreviation" == "T" ] ; then
+			filter_expand_abbreviated_number_calculator "$value" 1000000000000
+		else
+			halt_script "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO: internal failure:$abbreviation"
+		fi
+	else
+		echo "$number"
+	fi
+}
+
+#-------------------------------------------------------------------------------
+# The Key Statistics data is not useable until after filters are applied.
+#-------------------------------------------------------------------------------
+post_process_yahoo_key_statistics_apply_filters_and_print(){
+	local keyname="$1"
+	local keys
+	local value="$2"
+	local comments=""
+	local myregex
+	local processing_complete=0 
+
+	#----------------
+	# Apply all filters and then output the key/value pair.
+	#----------------
+
+	#-----------------------------------
+	# Filter: "Shares Short (prior month)" -> "Shares Short Prior Month"
+	#-----------------------------------
+	myregex="^Sha" ; #only process next if loop if keyname starts with Sha
+	if [[ "$keyname" =~ $myregex ]] ;then  #attempt to improve performance
+		if [ "$keyname" == "Shares Short (prior month)" ] ; then 
+			print_progress_indicator "S" 
+			keyname="Shares Short Prior Month"
+			processing_complete=1
+		fi
+	fi
+
+	#-----------------------------------
+	# Filter: Change any of the keys in list below to remove content 
+	# in between ( ) . Note: usually that content is a date.
+	#-----------------------------------
+	if [ "$processing_complete" == "0" ] ; then
+		myregex="^[5EFS]" ; #only process next if loop if starts 5,E,F, or S
+		if [[ "$keyname" =~ $myregex ]] ;then  #attempt to improve performance 
+			for keys in "52-Week Low" "52-Week High" "Enterprise Value" \
+						"Forward P/E" "Shares Short" "Short % of Float" \
+						"Short Ratio"; do
+				print_progress_indicator "f" 
+				myregex="^$keys[[:space:]]+(.*)"
+				if [[ "$keyname" =~ $myregex ]] ;then 
+					print_progress_indicator "F" 
+					processing_complete=1
+					comments="${BASH_REMATCH[1]}"
+					keyname="$keys"
+					break;
+				fi
+			done
+	
+		fi
+	fi
+	
+	#-----------------------------------
+	# Filter: Change Avg Vol (10 day) and "Avg Vol (3 month)"  to new names.
+	#-----------------------------------
+	if [ "$processing_complete" == "0" ] ; then
+		myregex="^Avg" ; #only process next if loop if keyname starts with Avg
+		if [[ "$keyname" =~ $myregex ]] ;then  #attempt to improve performance
+			if [ "$keyname" == "Avg Vol (10 day)" ] ; then  
+				print_progress_indicator "A" 
+				keyname="Avg Vol 10 day";
+				processing_complete=1
+			elif [ "$keyname" == "Avg Vol (3 month)" ] ; then 
+				print_progress_indicator "a" 
+				keyname="Avg Vol 3 month";
+				processing_complete=1
+			fi
+		fi
+	fi
+
+	#-----------------------------------
+	# Filter: Change Trailing Annual Dividend Yield" to
+	# "Trailing Annual Dividend Percent" if and only if
+	# its value is a percentage
+	#-----------------------------------
+	if [ "$processing_complete" == "0" ] ; then
+		myregex="^Tra" ; #only process next if loop if keyname starts with Tra
+		if [[ "$keyname" =~ $myregex ]] ;then  #attempt to improve performance
+			if [ "$keyname" == "Trailing Annual Dividend Yield" ] ; then
+				myregex="%" ; 
+				if [[ "$value" =~ $myregex ]] ;then
+					print_progress_indicator "t" 
+					keyname="Trailing Annual Dividend Percent"	
+					processing_complete=1
+				fi
+			fi
+		fi
+	fi
+
+	
+	#-----------------------------------
+	# All abbreviated numbers expanded. 
+	#-----------------------------------
+
+	value=${value//,/}
+	value=`filter_expand_abbreviated_number $value`
+
+	#-----------------------------------
+	# Filter All commas in numbers need to be removed.
+	#-----------------------------------
+
+	#echo "$keyname|$value|$comments" 
+	echo "$keyname|$value"
+	
+}
+
+
+#----------------------------------------------------
+# Extract data in key/value pair format from key statisitics data.
+# Performance note: This function is very slow.
+#----------------------------------------------------
+post_process_yahoo_key_statistics_data (){
+	local symbol=$1
+	local input_file=$2
+	local output_file=$3
+	local out_file=$1.
+	local headregex="<td.*tablehead.*" ; 
+	local dataregex="<td.*tabledata.*"; 
+	local header_row=1; 
+	local header_line="";
+	local data_row=0; 
+	local keyname;
+	local data;
+
+	check_input_file $input_file "${FUNCNAME[0]}:LN:$LINENO"
+
+	#echo "#COLUMN_SPEC:keyname|value|comments" 
+	echo "#COLUMN_SPEC:keyname|value" > $output_file
+	if grep "There is no Key Statistics data available for ${symbol}" \
+			 $input_file > /dev/null ; then
+		echo "WARNING: ${FUNCNAME[0]}:LN:$LINENO: There is no Key Statistics" \
+			" data available for $input_file" >> /dev/stderr
+		return;
+	fi
+
+	cat $input_file | sed "s/<td/\n<td/g" | grep -E 'tablehead|tabledata' | 
+	  sed "s/$SEPARATOR_CHAR/_/g" | grep -E '^<td' | while read line ; do 
+		if [[ "$line" =~ $headregex ]] ;then 
+			if [ "$header_row" == "1" ] ;then
+				header_line="$line";
+			else
+				echo "Warning: Found header row when not expecting it" >&2  
+				header_line="";
+				header_row=1;
+				data_row=0;
+				continue;
+			fi
+			header_row=0;
+			data_row=1;
+		elif [[ "$line" =~ $dataregex ]] ;then 
+			if [ "$data_row" == "1" ] ;then
+				keyname=`echo "$header_line" | sed "s/<font.*//g" | 
+					sed "s/<\/span.*//g" | sed "s/<\/td.*//g" | 
+					sed "s/<td .*>//g" | sed "s/:[[:space:]]*$//g" | 
+					head -1 | awk '{printf("%s",$0);}'`
+				data=`echo "$line" | sed "s/<font.*//g" | 
+					sed "s/<\/span.*//g" |  sed "s/<\/td.*//g" | 
+					sed "s/<td .*>//g" | head -1  | awk '{printf("%s",$0);}'`
+				post_process_yahoo_key_statistics_apply_filters_and_print \
+					"$keyname" "$data" >> $output_file
+			else
+				echo "Warning: Found data row when not expecting it" >&2  	 
+				header_row=1;
+				data_row=0;
+				continue;
+			fi
+			header_row=1;
+			data_row=0;
+		fi 
+	done 
+
+	local rc=$?
+	if [ "$rc" != "0" ] ; then
+			halt_script "ERROR:${FUNCNAME[0]}:LN:$LINENO: bad rc $rc" 
+	fi
+
+}
+
+
+#-------------------------------------------------------------------------------
+# Connects to Yahoo Finance and downloads data deemed relevlant for a given input
+# symbol and then does post processing on the outputs to make sure they follow
+# the expected format.
+#-------------------------------------------------------------------------------
+download_all_targets() {
+	local symbol=$1
+	local x;
+	declare -a const_download_targets=(
+	# hollywood name          
+	#    Output File Basename
+	#        Download URL
+	#            post processing function 
+	#---------------------------------------------------------------------
+	"Yahoo historical prices" 
+		yahoo.data.$symbol.historical.prices 
+			"http://ichart.finance.yahoo.com/table.csv?s=$symbol&a=06&b=2&c=1900&ignore=.csv" 
+				post_process_yahoo_historical_data 
+
+	#---------------------------------------------------------------------
+	#"Yahoo Profile data" 
+		#yahoo.data.${symbol}.profile
+			#"http://finance.yahoo.com/q/pr?s=${symbol}+Profile" 
+				#???
+
+	#---------------------------------------------------------------------
+	"Yahoo Key Statistics data" 
+		yahoo.data.${symbol}.key_statistics
+			"http://finance.yahoo.com/q/ks?s=${symbol}+Key+Statistics" 
+				post_process_yahoo_key_statistics_data
+
+	#---------------------------------------------------------------------
+	#"Yahoo Industry"
+		#yahoo.data.${symbol}.industry
+			#"http://finance.yahoo.com/q/in?s=${symbol}+Industry"
+				#???
+
+	null null null null
+	null null null null
+	null null null null
+	)
+	CONST_DOWNLOAD_TARGETS_COLUMN_WIDTH=4
+	
+	let x=0;
+	while((1)); do
+		if [ "${const_download_targets[$x]}" == "null" ] ;then break; fi
+		output_file=$CONFIG_OUTPUT_DIR/${const_download_targets[$x+1]}.out;
+		url=${const_download_targets[$x+2]};
+		post_cmd=${const_download_targets[$x+3]};
+
+		if [ "$CONFIG_URL_DOWNLOAD" == "1" ] ; then	
+			echo "------------------------------------------"
+			echo " Download ${const_download_targets[$x]} for $symbol, " \
+				 "$output_file $url $post_cmd "
+			echo "------------------------------------------"
+			#let x=$x+$CONST_DOWNLOAD_TARGETS_COLUMN_WIDTH;
+			#continue;
+			curl --output $output_file "$url"
+			rc=$?	
+			if [ "$rc" != "0" ] ;then
+				halt_script "ERROR:curl returned non-zero: $rc"
+			fi
+		fi
+
+		echo "------------------------------------------"
+		echo " Validate Data for $symbol"
+		echo "------------------------------------------"
+		print_progress_indicator "." 
+		post_process_remove_ctrl_m $output_file
+		print_progress_indicator "." 
+		new_output_file="$CONFIG_OUTPUT_DIR/${const_download_targets[$x+1]}.$SEPARATED_FILE_TYPE" ;
+		$post_cmd $symbol $output_file $new_output_file
+		rc=$?	
+		if [ "$rc" != "0" ] ;then
+			halt_script "ERROR:post_cmd : $post_cmd returned non-zero: $rc"
+		fi
+		if ! [ -e $new_output_file ] ;then
+			echo "ERROR:BUG:${FUNCNAME[0]}:LN:$LINENO:$new_output_file " \
+				"does not exist." >> /dev/stderr
+		fi
+		print_progress_indicator "." 
+		post_process_specification $symbol $new_output_file
+		print_progress_indicator "." 
+		post_process_validation $symbol $new_output_file
+		echo " Done. "
+		let x=$x+$CONST_DOWNLOAD_TARGETS_COLUMN_WIDTH;
+	done
+
+	local rc=$?
+	if [ "$rc" != "0" ] ; then
+			halt_script "ERROR:${FUNCNAME[0]}:LN:$LINENO: bad rc $rc" 
+	fi
+}
+
+usage(){ 
+	echo "------------------------------------------------------------"
+	echo " Usage: $0 symbol "
+	echo "------------------------------------------------------------"
+	echo "  symbol	: 	A symbol that exists in Yahoo Finance"
+	echo "------------------------------------------------------------"
+}
+	
+check_symbol_input (){
+	local symbol=$1
+	if ! [ -n "$symbol" ] ; then
+		usage	
+		halt_script "EXIT:Did not supply a symbol to $0" NO_CLEANUP
+	else
+		#------------------------------------------------------------
+		# Make symbol uppercase and make sure it is only one word
+		#------------------------------------------------------------
+		symbol=`echo $symbol | head -1 | awk '{print $1}' | tr 'a-z' 'A-Z'`
+	fi
+	echo $symbol
+}
+
+check_output_dir_exists(){
+	if ! [ -d "$CONFIG_OUTPUT_DIR" ] ; then
+		echo "WARNING::LN:$LINENO:CONFIG_OUTPUT_DIR did not exist. " \
+			 " creating." >> /dev/stderr
+		mkdir -p $CONFIG_OUTPUT_DIR
+		rc=$?
+		if [ "$rc" != "0" ] ;then
+			halt_script "ERROR:LN:$LINENO:CONFIG_OUTPUT_DIR " \
+				"$CONFIG_OUTPUT_DIR could not be created"
+		fi
+	fi
+}
+
+
+complete_processing() {
+	local symbol=$1
+	# if we got here, then there should have been no errors. 
+	#clean up any previous error indicators.
+	rm -rf $CONFIG_OUTPUT_DIR/yahoo.data.$symbol.*.err
+}
+
+#-------------------------------------------------------------------------------
+# Main Processing Sequence
+#-------------------------------------------------------------------------------
+do_main_sequence() {
+	local symbol=$1;
+	check_symbol_input $symbol
+	check_output_dir_exists 
+	download_all_targets $symbol
+	complete_processing $symbol; # This should only be called if full success was achieved.
+}
+
+do_main_sequence $1; # __UNIT_TEST_RM__ Please do not edit this comment
