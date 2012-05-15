@@ -31,10 +31,11 @@ import com.github.stocker.cmdline.MainCmdLine;
  */
 public class StockerFacade {
 
-    /* Log object */
+    /** Log object */
     Logger logger = LoggerFactory.getLogger(MainCmdLine.class);
-    /* Contains all stock symbols supported by stocker */
-    private ArrayList<String> stockSymbols = new ArrayList<String>();
+    
+    /** Contains all stock symbols supported by stocker */
+    private static ArrayList<String> stockSymbols = new ArrayList<String>();
     
     /** 
      * Default constructor
@@ -47,6 +48,7 @@ public class StockerFacade {
     /** 
      * Return all stock symbols available in our repository
      * 
+     * @return Array of all stock symbols within stocker data repository
      * TODO - Implement interface to return all stock symbols
      */
     public ArrayList<String> getAllSymbols() {
@@ -67,6 +69,10 @@ public class StockerFacade {
     /** 
      * Return array of all available historic data for input stock symbol
      * 
+     * @param i_stockSymbol Stock symbol to collect data for
+     * 
+     * @return Array of HistoricData objects for input stock symbol
+     * 
      * TODO - Implement interface to return Historic Data for each input
      *        stock symbol.
      */
@@ -80,6 +86,12 @@ public class StockerFacade {
     /** 
      * Return array of all available historic data for each input stock symbol
      * 
+     * @param i_stockSymbols Array of stock symbols to collect historical
+     *                       data for.
+     *                       
+     * @return Map of stock symbol to array of historical data for that
+     *         stock symbol
+     * 
      */
     public Map<String, HistoricData[]> getHistoricData(ArrayList<String> i_stockSymbols) {
 
@@ -92,9 +104,13 @@ public class StockerFacade {
     }
     
     /** 
-     * Return array of all available historic data for input stock symbol
+     * Return array of all available key statistic data for input stock symbol
      * 
-     * TODO - Implement interface to return Historic Data for each input
+     * @param i_stockSymbol Stock symbol to collect data for
+     * 
+     * @return KeyStatisticsData object for input stock symbol
+     * 
+     * TODO - Implement interface to return Key Statistics Data for each input
      *        stock symbol.
      */
     public KeyStatisticsData getKeyStatisticsData(String i_stockSymbol) {
@@ -105,7 +121,13 @@ public class StockerFacade {
     }
     
     /** 
-     * Return array of all available historic data for each input stock symbol
+     * Return array of all available key statistic data for each input stock symbol
+     * 
+     * @param i_stockSymbols Array of stock symbols to collect key statistic
+     *                       data for.
+     *                       
+     * @return Map of stock symbol to key statistic data object for that
+     *         stock symbol
      */
     public Map<String, KeyStatisticsData> getKeyStatisticsData(ArrayList<String> i_stockSymbols) {
 
