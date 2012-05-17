@@ -32,10 +32,11 @@ import com.github.stocker.cmdline.MainCmdLine;
 public class StockerFacade {
 
     /** Log object */
-    Logger logger = LoggerFactory.getLogger(MainCmdLine.class);
+    Logger logger = LoggerFactory.getLogger(this.getClass());
     
     /** Contains all stock symbols supported by stocker */
     private static ArrayList<String> stockSymbols = new ArrayList<String>();
+    
     
     /** 
      * Default constructor
@@ -67,19 +68,16 @@ public class StockerFacade {
     }
     
     /** 
-     * Return array of all available historic data for input stock symbol
+     * Return historic data for input stock symbol
      * 
      * @param i_stockSymbol Stock symbol to collect data for
      * 
-     * @return Array of HistoricData objects for input stock symbol
+     * @return HistoricData object for input stock symbol
      * 
-     * TODO - Implement interface to return Historic Data for each input
-     *        stock symbol.
      */
-    public HistoricData[] getHistoricData(String i_stockSymbol) {
+    public HistoricData getHistoricData(String i_stockSymbol) {
 
-        HistoricData[] l_data = null;
-        logger.error("TODO - getHistoricData() - Implement Me");
+        HistoricData l_data = DataFactory.getHistoricData(i_stockSymbol);
         return(l_data);
     }
     
@@ -93,9 +91,9 @@ public class StockerFacade {
      *         stock symbol
      * 
      */
-    public Map<String, HistoricData[]> getHistoricData(ArrayList<String> i_stockSymbols) {
+    public Map<String, HistoricData> getHistoricData(ArrayList<String> i_stockSymbols) {
 
-        Map<String, HistoricData[]> l_data = new HashMap<String, HistoricData[]>();
+        Map<String, HistoricData> l_data = new HashMap<String, HistoricData>();
         for(String l_symbol: i_stockSymbols) {
             l_data.put(l_symbol, getHistoricData(l_symbol));
         }
@@ -104,19 +102,15 @@ public class StockerFacade {
     }
     
     /** 
-     * Return array of all available key statistic data for input stock symbol
+     * Return key statistic data for input stock symbol
      * 
      * @param i_stockSymbol Stock symbol to collect data for
      * 
      * @return KeyStatisticsData object for input stock symbol
-     * 
-     * TODO - Implement interface to return Key Statistics Data for each input
-     *        stock symbol.
      */
     public KeyStatisticsData getKeyStatisticsData(String i_stockSymbol) {
 
-        KeyStatisticsData l_data = null;
-        logger.error("TODO - getKeyStatisticsData() - Implement Me");
+        KeyStatisticsData l_data = DataFactory.getKeyStatisticscData(i_stockSymbol);
         return(l_data);
     }
     

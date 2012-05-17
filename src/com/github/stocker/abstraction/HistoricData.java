@@ -44,7 +44,7 @@ public abstract class HistoricData {
      * since we'll guarantee the load via the multiton and then it's
      * read only data
      */
-    private ArrayList<HistoricDataInstance> histData = null;
+    private ArrayList<HistoricDataInstance> histData = new ArrayList<HistoricDataInstance>();
     
     /** Date that the objects data is valid for */
     private String stockSymbol = null;

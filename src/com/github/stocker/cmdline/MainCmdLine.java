@@ -28,7 +28,7 @@ public class MainCmdLine {
         // Get the historic data  and key statistics for all available symbols
         for(String l_symbol: l_stockSymbols) {
             logger.info("Stock Symbol: {}",l_symbol);
-            HistoricData[] l_histData = l_facade.getHistoricData(l_symbol);
+            HistoricData l_histData = l_facade.getHistoricData(l_symbol);
             KeyStatisticsData l_keyStats = l_facade.getKeyStatisticsData(l_symbol);
         }
         
