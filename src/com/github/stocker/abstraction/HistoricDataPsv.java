@@ -2,6 +2,7 @@ package com.github.stocker.abstraction;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,17 +37,17 @@ public class HistoricDataPsv extends HistoricData{
                 if(l_line[0].contains("#"))
                     continue;
                 
-                logger.info("date:{}  close price:{}",l_line[0],l_line[6]);
+                //logger.info("date:{}  adj close price:{}",l_line[0],l_line[6]);
+
+                BigDecimal l_adjPrice = new BigDecimal(l_line[6]);
+                l_adjPrice.setScale(2, BigDecimal.ROUND_HALF_UP);
+                this.addStockInstance(l_line[0],l_adjPrice,
+                        Integer.parseInt(l_line[5]));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
-        // TODO - Parse and load the file into our base classes
-        //        HistoricDataInstance array
-        
-        this.addStockInstance("date", 0);
-        
+               
     }
 
 }

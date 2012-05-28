@@ -1,7 +1,14 @@
 package com.github.stocker.abstraction;
 
-import java.util.ArrayList;
-import java.util.Date;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
 
 /**
  * Base class which represents an input stocks Historical information
@@ -14,11 +21,11 @@ public abstract class HistoricData {
      */
     public class HistoricDataInstance {
         
-        /** Date that the objects data is valid for */
-        Date date = null;
-        
         /** Closing price for stock on date */
-        float closePrice = 0;
+        private BigDecimal adjClosePrice;
+        
+        /** Stock trading volume on date */
+        private int volume = 0;
         
         /** 
          * Default constructor - Not valid so make private
@@ -30,23 +37,28 @@ public abstract class HistoricData {
         /** 
          * Constructor with input date
          * 
-         * @param  i_date Input date "YYYY-MM-DD"
+         * @param  i_closePrice Adjust closing stock price
+         * @param  i_volume Trading volume
          */
-        public HistoricDataInstance(String i_date,float i_closePrice) {
-            // TODO - Date parsing - date = Date.parse(i_date);
-            closePrice = i_closePrice;
+        public HistoricDataInstance(BigDecimal i_closePrice,int i_volume) {
+            adjClosePrice = i_closePrice;
+            volume = i_volume;
+            //logger.debug("TEST {} {}",adjClosePrice,volume);
         }
     }
     
-    /** 
-     * Array of historical data for, 1 for each day of valid data.
-     * Use ArrayList since synchronization (i.e. Vector) is not required
-     * since we'll guarantee the load via the multiton and then it's
-     * read only data
-     */
-    private ArrayList<HistoricDataInstance> histData = new ArrayList<HistoricDataInstance>();
+    /** Log object */
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
     
-    /** Date that the objects data is valid for */
+    /** 
+     * Map of historical data with a date,data key pair.
+     * Use TreeMap so that the data is sorted and we can simply take the first and
+     * last object to get newest and oldest entry in the data.
+     */
+    //private ArrayList<HistoricDataInstance> histData = new ArrayList<HistoricDataInstance>();
+    private TreeMap<StockerDate, HistoricDataInstance> histData = new TreeMap<StockerDate, HistoricDataInstance>();
+    
+    /** Stock symbol that the objects data is valid for */
     private String stockSymbol = null;
     
     /** 
@@ -70,11 +82,60 @@ public abstract class HistoricData {
     /** 
      * Add a stock instance based on date.
      * 
-     * @param  i_stockSymbol Input stock symbol
+     * @param  i_date Date in which data was recorded
+     * @param  i_closePrice Adjust closing price of stock on input date
+     * @param  i_volume Volume of stock traded on input date
      */
-    protected void addStockInstance(String i_date, float i_closePrice) {
-        HistoricDataInstance l_data = new HistoricDataInstance(i_date,i_closePrice);
-        histData.add(l_data);
+    protected void addStockInstance(String i_date, BigDecimal i_closePrice,int i_volume) {
+        HistoricDataInstance l_data = new HistoricDataInstance(i_closePrice,i_volume);
+        StockerDate l_date = new StockerDate(i_date);
+        histData.put(l_date, l_data);
+    }
+    
+    /** 
+     * Return the stocks adjust closing price on input date
+     * 
+     * @param  i_date Date in which data is being requested
+     */
+    public BigDecimal getAdjClosePrice(StockerDate i_date)
+    {
+        BigDecimal l_num = null;
+        if(histData.containsKey(i_date)) {
+            l_num = histData.get(i_date).adjClosePrice;
+        }            
+        return l_num;
+    }
+    
+    /** 
+     * Return the stocks trading volume on input date
+     * 
+     * @param  i_date Date in which data is being requested
+     */
+    public int getVolume(StockerDate i_date)
+    {
+        int l_vol = 0;
+        if(histData.containsKey(i_date)) {
+            l_vol = histData.get(i_date).volume;
+        }            
+        return l_vol;
+    }
+    
+    /** 
+     * Return the oldest available date for this stock
+     */
+    public StockerDate getOldestDataDate()
+    {
+        //logger.debug("OldestData: {}",histData.firstKey().getDateString());
+        return histData.firstKey();
+    }
+    
+    /** 
+     * Return the newest recording date for this stock
+     */
+    public StockerDate getNewestDataDate()
+    {
+        //logger.debug("NewestData: {}",histData.lastKey().getDateString());
+        return histData.lastKey();
     }
      
 }

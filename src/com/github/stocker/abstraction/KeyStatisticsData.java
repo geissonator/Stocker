@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 public abstract class KeyStatisticsData {
     
     /** Log object */
-    Logger logger = LoggerFactory.getLogger(this.getClass());
+    protected Logger logger = LoggerFactory.getLogger(this.getClass());
     
     /** Date that the objects data is valid for */
     private String stockSymbol = null;

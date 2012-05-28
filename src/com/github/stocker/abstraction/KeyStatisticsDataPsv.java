@@ -27,7 +27,7 @@ public class KeyStatisticsDataPsv extends KeyStatisticsData {
                 if(l_line[0].contains("#"))
                     continue;
                 
-                logger.info("{}  {}",l_line[0],l_line[1]);
+                //logger.info("{}  {}",l_line[0],l_line[1]);
             }
         } catch (IOException e) {
             e.printStackTrace();
