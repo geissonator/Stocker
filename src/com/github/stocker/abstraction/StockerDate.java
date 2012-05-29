@@ -122,7 +122,6 @@ public class StockerDate implements Comparable<StockerDate> {
     /** 
      * Allows easy comparison operations to let us sort StockerDates
      */
-    @Override
     public int compareTo(StockerDate i_cmp) {
         return this.iv_date.compareTo(i_cmp.iv_date);
     }
