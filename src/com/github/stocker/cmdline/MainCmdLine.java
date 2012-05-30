@@ -41,17 +41,23 @@ public class MainCmdLine {
                     new Object[]{l_symbol,l_oldest.getDateString(),l_histData.getAdjClosePrice(l_oldest).floatValue(),
                     l_newest.getDateString(),l_histData.getAdjClosePrice(l_newest).floatValue()});
             
-            BigDecimal l_return = l_histData.getAdjClosePrice(l_newest).subtract(l_histData.getAdjClosePrice(l_oldest));
-            l_return = l_return.divide(l_histData.getAdjClosePrice(l_oldest), BigDecimal.ROUND_HALF_DOWN);
-            logger.info("The rate of return on IBM stock from it's inception to now is {}%",
-                    l_return.floatValue()*100);
-            
+            if(l_histData.getAdjClosePrice(l_oldest).intValue() != 0) {
+                BigDecimal l_return = l_histData.getAdjClosePrice(l_newest).subtract(l_histData.getAdjClosePrice(l_oldest));
+                l_return = l_return.divide(l_histData.getAdjClosePrice(l_oldest), BigDecimal.ROUND_HALF_DOWN);
+                logger.info("The rate of return on {} stock from it's inception to now is {}%",
+                        l_symbol,l_return.floatValue()*100);
+            }
+            else
+            {
+                logger.error("Stock symbol {} has a stock price of 0!",l_symbol);
+            }
+            /* Comment out for now for performance
+             * 
             // Run a simple algorithm to find the lowest and highest stock
             // price for the stock symbol
             BigDecimal l_highest = l_histData.getAdjClosePrice(l_oldest);
             BigDecimal l_lowest = l_histData.getAdjClosePrice(l_oldest);
-            
-            
+                        
             for(StockerDate i=l_oldest; (i.compareTo(l_newest) <= 0); i.inc()) {
 
                 // TODO - Ignore invalid dates (need .inc() to not return invalid dates)
@@ -69,7 +75,7 @@ public class MainCmdLine {
             
             logger.info("The lowest value for {} stock was {} and the highest was {}",
                     new Object[]{l_symbol,l_lowest,l_highest});
-            
+            */
         }        
     }
 }
