@@ -56,9 +56,8 @@ public class StockerFacade {
         synchronized(stockSymbols) {
             if(stockSymbols.size() == 0) {
                 // Load in all stock symbols
-                
-                // TODO - Put something in for a test now
-                stockSymbols.add("IBM");
+                StockerGlobalData l_data = DataFactory.getStockerInfoData();
+                stockSymbols = l_data.getStockSymbols();
             }
         }    
         // TODO - Might want to return a copy of the vector
@@ -110,7 +109,7 @@ public class StockerFacade {
      */
     public KeyStatisticsData getKeyStatisticsData(String i_stockSymbol) {
 
-        KeyStatisticsData l_data = DataFactory.getKeyStatisticscData(i_stockSymbol);
+        KeyStatisticsData l_data = DataFactory.getKeyStatisticsData(i_stockSymbol);
         return(l_data);
     }
     

@@ -1,11 +1,8 @@
 package com.github.stocker.abstraction;
 
-import java.io.File;
-import java.io.FileFilter;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.net.URL;
-import org.apache.commons.io.filefilter.WildcardFileFilter;
 
 import au.com.bytecode.opencsv.CSVReader;
 
