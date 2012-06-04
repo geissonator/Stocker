@@ -2,7 +2,6 @@ package com.github.stocker.plugin;
 
 public class ExamplePlugin implements StockerInterface {
 
-	@Override
 	public StockerPluginResult run() {
 		// TODO Auto-generated method stub
 		StockerPluginResult x = new StockerPluginResult();
