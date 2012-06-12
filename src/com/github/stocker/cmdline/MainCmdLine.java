@@ -47,6 +47,8 @@ public class MainCmdLine {
                     new Object[]{l_symbol,l_oldest.getDateString(),l_histData.getAdjClosePrice(l_oldest).floatValue(),
                     l_newest.getDateString(),l_histData.getAdjClosePrice(l_newest).floatValue()});
             
+            logger.info("{}- Market Cap:{}  PE:{}",new Object[]{l_symbol,l_keyStats.getMargetCap(),l_keyStats.getTrailingPE()});
+            
             if(l_histData.getAdjClosePrice(l_oldest).intValue() != 0) {
                 BigDecimal l_return = l_histData.getAdjClosePrice(l_newest).subtract(l_histData.getAdjClosePrice(l_oldest));
                 l_return = l_return.divide(l_histData.getAdjClosePrice(l_oldest), BigDecimal.ROUND_HALF_DOWN);
