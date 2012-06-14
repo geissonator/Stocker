@@ -1,13 +1,16 @@
 package com.github.stocker.plugin;
 
+/**
+ * Example plugin for people to use when creating a new plugin
+ * 
+ */
 public class ExamplePlugin implements StockerInterface {
 
 	public StockerPluginResult run() {
-		// TODO Auto-generated method stub
 		StockerPluginResult x = new StockerPluginResult();
-		x.rating.put("IBM", 44.5);
-		x.rating.put("AMD", 17.5);
-		x.rating.put("INTC", 21.5);
+		x.add("IBM", 44.5);
+		x.add("AMD", 17.5);
+		x.add("INTC", 21.5);
 		return x;
 	}
 

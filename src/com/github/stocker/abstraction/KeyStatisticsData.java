@@ -63,6 +63,10 @@ public abstract class KeyStatisticsData {
      * @return  Market cap of stock.
      */
     public BigInteger getMargetCap() {
+        if(marketCap == null) {
+            logger.error("Stock Symbol {} has no Market Cap!",stockSymbol);
+            marketCap = new BigInteger("0");
+        }
         return marketCap;
     }
     
@@ -81,6 +85,10 @@ public abstract class KeyStatisticsData {
      * @return  Enterprise value of stock.
      */
     public BigInteger getEnterpriseVal() {
+        if(enterpriseVal == null) {
+            logger.error("Stock Symbol {} has no Enterprise PE!",stockSymbol);
+            enterpriseVal = new BigInteger("0");
+        }
         return enterpriseVal;
     }
     
@@ -99,6 +107,10 @@ public abstract class KeyStatisticsData {
      * @return  Trailing PE
      */
     public BigDecimal getTrailingPE() {
+        if(trailingPE == null) {
+            logger.error("Stock Symbol {} has no Trailing PE!",stockSymbol);
+            trailingPE = new BigDecimal("0");
+        }
         return trailingPE;
     }
     

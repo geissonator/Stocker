@@ -3,6 +3,8 @@ package com.github.stocker.cmdline;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +12,7 @@ import com.github.stocker.abstraction.HistoricData;
 import com.github.stocker.abstraction.KeyStatisticsData;
 import com.github.stocker.abstraction.StockerDate;
 import com.github.stocker.abstraction.StockerFacade;
+import com.github.stocker.plugin.BestPePlugin;
 import com.github.stocker.plugin.ExamplePlugin;
 import com.github.stocker.plugin.StockerPluginResult;
 
@@ -26,11 +29,18 @@ public class MainCmdLine {
         logger.debug("Debug - {} {} with Parameters", "Hello","World");
         logger.debug("How to trace more then 2 parameters {} {} {}", new Object[]{1,2,3});
         
+        // TODO - Find way to call all plugins automatically
         ExamplePlugin p = new ExamplePlugin();
         StockerPluginResult r = p.run();
+
+        logger.info (" does result contain ibm: " + r.get("IBM") );
         
-        logger.info (" does result contain ibm: " + r.rating.get("IBM") );
-        
+        BestPePlugin l_pe = new BestPePlugin();
+        r = l_pe.run();
+        r.print(100);
+
+        /* Comment out for now for performance
+         
         // Load the facade and get all supported stock symbols
         StockerFacade l_facade = new StockerFacade();   
         ArrayList<String> l_stockSymbols = l_facade.getAllSymbols();
@@ -59,7 +69,6 @@ public class MainCmdLine {
             {
                 logger.error("Stock symbol {} has a stock price of 0!",l_symbol);
             }
-            /* Comment out for now for performance
              * 
             // Run a simple algorithm to find the lowest and highest stock
             // price for the stock symbol
@@ -83,7 +92,7 @@ public class MainCmdLine {
             
             logger.info("The lowest value for {} stock was {} and the highest was {}",
                     new Object[]{l_symbol,l_lowest,l_highest});
-            */
-        }        
+        }      
+        */  
     }
 }
