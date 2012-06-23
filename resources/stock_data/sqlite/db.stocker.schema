@@ -1,0 +1,92 @@
+BEGIN TRANSACTION;
+
+CREATE TABLE ysymbol ( 
+	symbolid INTEGER PRIMARY KEY,
+	name TEXT 	-- want only upper case to be allowed... how?
+);
+
+CREATE TABLE yprice ( 
+	symbolid INTEGER,
+	date TEXT, 
+	open REAL, 
+	high REAL, 
+	low REAL, 
+	close REAL, 
+	volume REAL, 
+	adjclose REAL, 
+	FOREIGN KEY (symbolid) REFERENCES ysymbol(symbolid),
+	UNIQUE(symbolid,date) -- constraint prevents same date for same symbolid twice
+	);
+
+CREATE TABLE ystat ( 
+	symbolid INTEGER,
+	_200_Day_Moving_Average REAL,
+	_50_Day_Moving_Average REAL,
+	_52_Week_Change REAL,
+	_52_Week_High REAL,
+	_52_Week_Low REAL,
+	_5_Year_Average_Dividend_Yield REAL,
+	Avg_Vol_10_day REAL,
+	Avg_Vol_3_month REAL,
+	Beta REAL,
+	Book_Value_Per_Share REAL,
+	Current_Ratio REAL,
+	Diluted_EPS REAL,
+	Dividend_Date TEXT,
+	EBITDA REAL,
+	Enterprise_Value REAL,
+	Enterprise_Value_EBITDA REAL,
+	Enterprise_Value_Revenue REAL,
+	Ex_Dividend_Date TEXT,
+	Fiscal_Year_Ends TEXT,
+	Float REAL,
+	Forward_Annual_Dividend_Rate REAL,
+	Forward_Annual_Dividend_Yield REAL,
+	Forward_P_E REAL,
+	Gross_Profit REAL,
+	Held_by_Insiders REAL,
+	Held_by_Institutions REAL,
+	Last_Split_Date TEXT,
+	Last_Split_Factor TEXT,
+	Levered_Free_Cash_Flow REAL,
+	Market_Cap REAL,
+	Most_Recent_Quarter TEXT,
+	Net_Income_Avl_to_Common REAL,
+	Operating_Cash_Flow REAL,
+	Operating_Margin REAL,
+	Payout_Ratio REAL,
+	PEG_Ratio REAL,
+	Price_Book REAL,
+	Price_Sales REAL,
+	Profit_Margin REAL,
+	Qtrly_Earnings_Growth REAL,
+	Qtrly_Revenue_Growth REAL,
+	Return_on_Assets REAL,
+	Return_on_Equity REAL,
+	Revenue REAL,
+	Revenue_Per_Share REAL,
+	Shares_Outstanding REAL,
+	Shares_Short REAL,
+	Shares_Short_Prior_Month REAL,
+	Short_of_Float REAL,
+	Short_Ratio REAL,
+	SP500_52_Week_Change REAL,
+	Total_Cash REAL,
+	Total_Cash_Per_Share REAL,
+	Total_Debt REAL,
+	Total_Debt_Equity REAL,
+	Trailing_Annual_Dividend REAL,
+	Trailing_Annual_Dividend_Yield REAL,
+	Trailing_P_E REAL,
+	FOREIGN KEY (symbolid) REFERENCES ysymbol(symbolid)
+	UNIQUE(symbolid) -- constraint prevents more than one row per symbolid 
+	);
+
+CREATE INDEX ysymbol_name_index on ysymbol(name COLLATE NOCASE);
+
+CREATE VIEW ystat_view as SELECT ysymbol.name, ystat.* FROM ysymbol,ystat WHERE ysymbol.symbolid = ystat.symbolid ;
+CREATE VIEW yprice_view as SELECT ysymbol.name, yprice.* FROM ysymbol,yprice WHERE ysymbol.symbolid = yprice.symbolid ;
+
+PRAGMA foreign_keys = ON;
+
+COMMIT;

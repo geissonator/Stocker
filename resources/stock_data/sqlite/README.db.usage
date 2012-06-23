@@ -42,7 +42,7 @@ split -b 100M yStocker.db db.partial.
 # from the db.partial files.  sheesh! that is a big pain.
 #--------------------
 
-cat db.partial.a* > yStocker.db
+cat db.partial.* > yStocker.db
 
 #--------------------
 # Setup:ACTION: Check your sum. for your reconstructed file.
