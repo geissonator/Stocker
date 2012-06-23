@@ -17,7 +17,7 @@ public abstract class UtilPsv {
      * @return CSVReader valid object
      */
     static CSVReader getCSVReaderHistoric(String i_stockSymbol) {
-        String l_file = "yahoo.data." + i_stockSymbol + ".historical.prices.psv";
+        String l_file = "data." + i_stockSymbol + ".historical.prices.psv";
         return getCSVReader(l_file);
     }
     
@@ -27,7 +27,7 @@ public abstract class UtilPsv {
      * @return CSVReader valid object
      */
     static CSVReader getCSVReaderKeyStatistics(String i_stockSymbol) {
-        String l_file = "yahoo.data." + i_stockSymbol + ".key_statistics.psv";
+        String l_file = "data." + i_stockSymbol + ".key_statistics.psv";
         return getCSVReader(l_file);
     }
     

@@ -1,0 +1,134 @@
+#-----------------------------------------------------------
+# Usage notes (Command line)
+#-----------------------------------------------------------
+
+#-----------------------------------------------------------
+# Setup: build yStocker.db file.  (Do Setup:ACTION) below.
+# other info is just fyi/background about why you have to 
+# do this.
+#-----------------------------------------------------------
+
+
+#--------------------
+# Background:
+# Setup:WHY? build yStocker.db file.  - got an error from github
+#--------------------
+I got an error from git hub trying to checkin yStocker.db file.
+I don't know how to fix this:
+
+[9:25:42 PM] marc.dickenson: im pushing to master
+[9:25:44 PM] marc.dickenson: watch out
+[9:26:06 PM] marc.dickenson: aye!
+[9:26:07 PM] marc.dickenson: untu:~/dev/invest/current/Stocker$ git push origin master
+Counting objects: 38, done.
+Compressing objects: 100% (21/21), done.
+fatal: Out of memory, malloc failed (tried to allocate 1306647902 bytes)
+fatal: early EOF
+error: failed to push some refs to 'git@github.com:geissonator
+[9:26:09 PM] marc.dickenson: what the hell
+
+
+#--------------------
+# Setup:Workaround, so i had to split the file into db.partial.* files
+#--------------------
+
+I had to do this just to check it into github:
+
+split -b 100M yStocker.db db.partial.
+
+#--------------------
+# Setup:ACTION: Thus you need to do this to reconstruct yStocker.db
+# Thus.. This is the part you need to do to reconstruct the full database
+# from the db.partial files.  sheesh! that is a big pain.
+#--------------------
+
+cat db.partial.a* > yStocker.db
+
+#--------------------
+# Setup:ACTION: Check your sum. for your reconstructed file.
+# it should == to the number below
+#--------------------
+
+02822 1275634
+
+#--------------------
+# Setup:Complete. Whew! 
+#--------------------
+
+That was all caused by github. I increased my memory to 8GB on my vmware, so i don't see how i didn't have enough memory.
+
+
+#-----------------------------------------------------------
+# Pre-requisites (to use the database on the sqlite3 commandline)
+#-----------------------------------------------------------
+sqlite3 is required. , Currently using 3.7.4
+
+SQLite version 3.7.4
+
+#-----------------------------------------------------------
+# Load the yStocker.db with sqlite3 commandline
+# this database is or should be a read-only db.
+#-----------------------------------------------------------
+
+sqlite3 yStocker.db 
+SQLite version 3.7.4
+Enter ".help" for instructions
+Enter SQL statements terminated with a ";"
+sqlite> 
+
+#-----------------------------------------------------------
+# Display database schema
+#-----------------------------------------------------------
+
+sqlite> .schema
+CREATE TABLE yprice ( 
+	symbolid INTEGER,
+	date TEXT, 
+	open REAL, 
+	high REAL, 
+..
+..
+
+
+#-----------------------------------------------------------
+# Select some specific Key Statistics for a single stock IBM
+#-----------------------------------------------------------
+
+sqlite> SELECT Trailing_P_E FROM ystat_view WHERE name LIKE 'ibm';
+14.42
+sqlite> SELECT Forward_P_E FROM ystat_view WHERE name LIKE 'ibm';
+11.62
+sqlite> SELECT Diluted_EPS FROM ystat_view WHERE name LIKE 'ibm';
+13.41
+
+#-----------------------------------------------------------
+# Select the top 10 stocks by Market Cap in the db
+#-----------------------------------------------------------
+sqlite> SELECT name,Market_Cap FROM ystat_view WHERE Market_Cap != 'N_A' ORDER BY Market_Cap DESC limit 10;
+AU|1360000000000.0
+AAPL|540160000000.0
+XOM|383960000000.0
+MSFT|253160000000.0
+PTR|244690000000.0
+WMT|229070000000.0
+IBM|223070000000.0
+RDS-B|213000000000.0
+CHL|208350000000.0
+GE|206770000000.0
+
+#-----------------------------------------------------------
+# Select the 10 stocks with the lowest Trailing_P_E in the db
+#-----------------------------------------------------------
+sqlite>  SELECT name,Trailing_P_E FROM ystat_view WHERE Trailing_P_E != 'N_A' ORDER BY Trailing_P_E ASC limit 10;
+PCYC|0.0
+SHFL|0.0
+SMRT|0.0
+SSNC|0.0
+STAA|0.0
+SUSS|0.0
+TNAV|0.0
+UNFI|0.0
+BRK-B|0.01
+CCRT|0.78
+sqlite> 
+

@@ -32,7 +32,7 @@ public class StockerGlobalDataPsv extends StockerGlobalData {
             for (Iterator<File> iterator = l_files.iterator(); iterator.hasNext();) {
                 File l_tmpFile = (File) iterator.next();
                 String[] l_tokens = l_tmpFile.getName().split("[.]");
-                // yahoo.data.<symbol>.*
+                // data.<symbol>.*
                 //System.out.println(l_tokens[0] + l_tokens[1] + l_tokens[2]);
                 if(!l_data.contains(l_tokens[2])) {
                     l_data.add(l_tokens[2]);
