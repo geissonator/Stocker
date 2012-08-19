@@ -11,6 +11,10 @@
 	<classpathentry kind="lib" path="lib/opencsv-2.3.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.3.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="lib/sqlite4java-282/sqlite4java.jar"/>
+	<classpathentry kind="lib" path="lib/sqlite4java-282/sqlite4java.jar">
+		<attributes>
+			<attribute name="javadoc_location" value="http://almworks.com/sqlite4java/javadoc/index.html"/>
+		</attributes>
+	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
