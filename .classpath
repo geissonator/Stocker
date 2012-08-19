@@ -13,7 +13,7 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="lib/sqlite4java-282/sqlite4java.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="http://almworks.com/sqlite4java/javadoc/index.html"/>
+			<attribute name="javadoc_location" value="http://almworks.com/sqlite4java/javadoc/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>
