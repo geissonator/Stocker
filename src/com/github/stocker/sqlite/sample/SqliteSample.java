@@ -29,7 +29,7 @@ public class SqliteSample {
 			System.out.print("Exception occurred: " + e);
 		}
 
-		// A simple query 2 return key stats for stock symbol IBM 
+		// A simple query to return key stats for stock symbol IBM 
 		SQLiteStatement st = db.prepare("SELECT * FROM ystat_view WHERE name = \'IBM\' ");
 
 		try {
