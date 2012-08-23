@@ -32,6 +32,7 @@ public abstract class KeyStatisticsData {
     /** 
      * Default constructor - Not valid so make private
      */
+    @SuppressWarnings("unused")
     private KeyStatisticsData() {
         
     }

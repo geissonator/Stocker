@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.stocker.abstraction.KeyStatisticsData;
+import com.github.stocker.abstraction.StockerDate;
 import com.github.stocker.abstraction.StockerFacade;
 import com.github.stocker.cmdline.MainCmdLine;
 
@@ -13,14 +14,18 @@ import com.github.stocker.cmdline.MainCmdLine;
  * Price per Earnings Plugin
  * 
  * This plugin looks at the current PE of all stocks and
- * simply ranks them based on it.
+ * simply ranks them based on it (best rating goes to lowest PE)
+ * 
+ * DATA REQUIRED
+ * - Trailing PE
+ * 
  * 
  */
 public class BestPePlugin implements StockerInterface {
 
     Logger logger = LoggerFactory.getLogger(MainCmdLine.class);
     
-    public StockerPluginResult run() {
+    public StockerPluginResult run(StockerDate i_start, StockerDate i_stop) {
         
         StockerPluginResult l_rslt = new StockerPluginResult();
         

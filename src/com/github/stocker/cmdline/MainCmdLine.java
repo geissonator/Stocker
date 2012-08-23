@@ -1,17 +1,8 @@
 package com.github.stocker.cmdline;
 
-import java.math.BigDecimal;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.stocker.abstraction.HistoricData;
-import com.github.stocker.abstraction.KeyStatisticsData;
-import com.github.stocker.abstraction.StockerDate;
-import com.github.stocker.abstraction.StockerFacade;
 import com.github.stocker.plugin.BestPePlugin;
 import com.github.stocker.plugin.ExamplePlugin;
 import com.github.stocker.plugin.StockerPluginResult;
@@ -31,14 +22,17 @@ public class MainCmdLine {
         
         // TODO - Find way to call all plugins automatically
         ExamplePlugin p = new ExamplePlugin();
-        StockerPluginResult r = p.run();
+        StockerPluginResult r = p.run(null,null);
 
         logger.info (" does result contain ibm: " + r.get("IBM") );
         
         BestPePlugin l_pe = new BestPePlugin();
-        r = l_pe.run();
+        r = l_pe.run(null,null);
         r.print(100);
-
+        
+        // TODO - Need to write a combine function for StockerPluginResult that will combine
+        //        results and display the summary of all plugins at the end.
+        
         /* Comment out for now for performance
          
         // Load the facade and get all supported stock symbols

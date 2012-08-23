@@ -3,12 +3,10 @@ package com.github.stocker.abstraction;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.stocker.cmdline.MainCmdLine;
 
 /**
  * Facade class into stocker data
@@ -62,7 +60,6 @@ public class StockerFacade {
         }    
         // TODO - Might want to return a copy of the vector
         //        to avoid abuse by caller
-        logger.error("TODO - getAllSymbols() - Implement Me");
         return(stockSymbols);
     }
     

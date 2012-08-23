@@ -1,13 +1,10 @@
 package com.github.stocker.abstraction;
 
-import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.stocker.cmdline.MainCmdLine;
 
 import au.com.bytecode.opencsv.CSVReader;
 

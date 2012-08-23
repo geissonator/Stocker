@@ -1,7 +1,5 @@
 package com.github.stocker.abstraction;
 
-import java.util.ArrayList;
-
 /**
  * Factory design pattern which returns the correct type of 
  * object for the historic and key statistics classes

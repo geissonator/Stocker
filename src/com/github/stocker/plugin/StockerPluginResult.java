@@ -55,6 +55,18 @@ public class StockerPluginResult {
             }
         }
     }
+    
+    /** 
+     * Combine the results of this object with those of another.
+     * 
+     * @param i_data Data to combine with this object
+     *
+     */
+    public void combine(StockerPluginResult i_data)
+    {
+        // TODO
+        
+    }
 }
 
 class ValueComparator implements Comparator<Object> {

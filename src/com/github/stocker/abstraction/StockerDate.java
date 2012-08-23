@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 public class StockerDate implements Comparable<StockerDate> {
 
     /** Log object */
+    @SuppressWarnings("unused")
     private Logger logger = LoggerFactory.getLogger(this.getClass());
     
     /** Internal date object */
@@ -32,6 +33,7 @@ public class StockerDate implements Comparable<StockerDate> {
     /** 
      * Default constructor - Not valid so make private
      */
+    @SuppressWarnings("unused")
     private StockerDate() {
         
     }
@@ -52,28 +54,45 @@ public class StockerDate implements Comparable<StockerDate> {
     }
     
     /** 
+     * Constructor which takes another StockerDate as input
+     */
+    public StockerDate (StockerDate i_date) {
+        
+        try {
+            iv_date =  new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH).parse(i_date.getDateString());
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        //logger.debug("Input Date: {}",iv_date);
+    }
+    
+    /** 
      * Increment current date to next valid stock date
+     *
+     * @param i_incr Days to increment by.
      *
      * TODO - Ensure it's a valid stock day
      */
-    public void inc()
+    public void inc(int i_incr)
     {
         Calendar l_cal = Calendar.getInstance();
         l_cal.setTime(iv_date);
-        l_cal.add(Calendar.DATE, 1);
+        l_cal.add(Calendar.DATE, i_incr);
         iv_date = l_cal.getTime();
     }
     
     /** 
      * Decrement current date to next valid stock date
      *
+     * @param i_decr Days to decrement by.
+     * 
      * TODO - Ensure it's a valid stock day
      */
-    public void dec()
+    public void dec(int i_decr)
     {
         Calendar l_cal = Calendar.getInstance();
         l_cal.setTime(iv_date);
-        l_cal.roll(Calendar.DATE, -1);
+        l_cal.add(Calendar.DATE, (i_decr*-1));
         iv_date = l_cal.getTime();
     }
     
@@ -125,4 +144,5 @@ public class StockerDate implements Comparable<StockerDate> {
     public int compareTo(StockerDate i_cmp) {
         return this.iv_date.compareTo(i_cmp.iv_date);
     }
+    
 }
